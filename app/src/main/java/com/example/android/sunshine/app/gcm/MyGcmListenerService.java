@@ -29,12 +29,15 @@ import android.widget.Toast;
 
 import com.example.android.sunshine.app.MainActivity;
 import com.example.android.sunshine.app.R;
-import com.google.android.gms.gcm.GcmListenerService;
+import com.google.firebase.messaging.FirebaseMessagingService;
+import com.google.firebase.messaging.RemoteMessage;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class MyGcmListenerService extends GcmListenerService {
+import java.util.Map;
+
+public class MyGcmListenerService extends FirebaseMessagingService {
 
     private static final String TAG = "MyGcmListenerService";
 
@@ -44,19 +47,14 @@ public class MyGcmListenerService extends GcmListenerService {
 
     public static final int NOTIFICATION_ID = 1;
 
-    /**
-     * Called when message is received.
-     *
-     * @param from SenderID of the sender.
-     * @param data Data bundle containing message data as key/value pairs.
-     *             For Set of keys use data.keySet().
-     */
+
     @Override
-    public void onMessageReceived(String from, Bundle data) {
+    public void onMessageReceived(RemoteMessage message) {
+        String from = message.getFrom();
+        Map data = message.getData();
         // Time to unparcel the bundle!
         if (!data.isEmpty()) {
-            // TODO: gcm_default sender ID comes from the API console
-            String senderId = getString(R.string.gcm_defaultSenderId);
+            String senderId = getString(R.string.fcm_defaultSenderId);
             if (senderId.length() == 0) {
                 Toast.makeText(this, "SenderID string needs to be set", Toast.LENGTH_LONG).show();
             }
@@ -64,7 +62,7 @@ public class MyGcmListenerService extends GcmListenerService {
             if ((senderId).equals(from)) {
                 // Process message and then post a notification of the received message.
                 try {
-                    JSONObject jsonObject = new JSONObject(data.getString(EXTRA_DATA));
+                    JSONObject jsonObject = new JSONObject(data.get(EXTRA_DATA).toString());
                     String weather = jsonObject.getString(EXTRA_WEATHER);
                     String location = jsonObject.getString(EXTRA_LOCATION);
                     String alert =

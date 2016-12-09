@@ -17,9 +17,12 @@
 package com.example.android.sunshine.app.gcm;
 
 import android.content.Intent;
-import com.google.android.gms.iid.InstanceIDListenerService;
+import android.util.Log;
 
-public class MyInstanceIDListenerService extends InstanceIDListenerService {
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.FirebaseInstanceIdService;
+
+public class MyInstanceIDListenerService extends FirebaseInstanceIdService {
     private static final String TAG = "MyInstanceIDLS";
 
     /**
@@ -30,7 +33,10 @@ public class MyInstanceIDListenerService extends InstanceIDListenerService {
     @Override
     public void onTokenRefresh() {
         // Fetch updated Instance ID token.
-        Intent intent = new Intent(this, RegistrationIntentService.class);
-        startService(intent);
+// Get updated InstanceID token.
+        String refreshedToken = FirebaseInstanceId.getInstance().getToken();
+        Log.d(TAG, "Refreshed token: " + refreshedToken);
+        // TODO: Implement this method to send any registration to your app's servers.
+     //   sendRegistrationToServer(refreshedToken);
     }
 }
