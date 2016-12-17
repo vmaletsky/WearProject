@@ -586,7 +586,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter implements 
             mGoogleApiClient.connect();
             return;
         }
-
+        Log.v(LOG_TAG, "sendDataToWatch");
         Context context = getContext();
         String locationQuery = Utility.getPreferredLocation(context);
         Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());

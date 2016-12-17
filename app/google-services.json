@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "430288458146",
+    "firebase_url": "https://sunshine-1470729420455.firebaseio.com",
+    "project_id": "sunshine-1470729420455",
+    "storage_bucket": "sunshine-1470729420455.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:430288458146:android:83b792e26f07bf18",
+        "android_client_info": {
+          "package_name": "com.example.android.sunshine.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "430288458146-n1f8uiltetcfaram0t6f6cnvsmp0uq5n.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "430288458146-7b0l5mm2j0qvmcd1sb00t1knajcahpbg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC8mBCHdST5uhYxokRXF6rYHXngnqP0Jok"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
