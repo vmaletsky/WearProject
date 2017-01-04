@@ -24,18 +24,25 @@ import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.util.Log;
+import android.view.Display;
+import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
+import android.view.View;
 import android.view.WindowInsets;
+import android.view.WindowManager;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -47,7 +54,9 @@ import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.Wearable;
 
 import java.lang.ref.WeakReference;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
@@ -95,11 +104,10 @@ public class MyWatchFace extends CanvasWatchFaceService {
         }
     }
 
-    private class Engine extends CanvasWatchFaceService.Engine  {
+    private class Engine extends CanvasWatchFaceService.Engine {
         final Handler mUpdateTimeHandler = new EngineHandler(this);
         boolean mRegisteredTimeZoneReceiver = false;
-        Paint mBackgroundPaint;
-        Paint mTextPaint;
+
         boolean mAmbient;
         Calendar mCalendar;
         final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
@@ -109,8 +117,28 @@ public class MyWatchFace extends CanvasWatchFaceService {
                 invalidate();
             }
         };
+        final BroadcastReceiver mWeatherDataChangedReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                mHighTemp = intent.getStringExtra("high-temp");
+                mLowTemp = intent.getStringExtra("low-temp");
+                mWeatherId = intent.getStringExtra("sunshine_weather_id");
+
+                highTemp.setText(mHighTemp);
+                lowTemp.setText(mLowTemp);
+            }
+        };
         float mXOffset;
         float mYOffset;
+
+        private String mHighTemp;
+        private String mLowTemp;
+        private String mWeatherId;
+
+        private int specW, specH;
+        private View myLayout;
+        private TextView date, hour, minute, second, highTemp, lowTemp;
+        private final Point displaySize = new Point();
 
         GoogleApiClient mGoogleApiClient;
 
@@ -137,11 +165,25 @@ public class MyWatchFace extends CanvasWatchFaceService {
             Resources resources = MyWatchFace.this.getResources();
             mYOffset = resources.getDimension(R.dimen.digital_y_offset);
 
-            mBackgroundPaint = new Paint();
-            mBackgroundPaint.setColor(resources.getColor(R.color.primary));
+            LayoutInflater inflater =
+                    (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            myLayout = inflater.inflate(R.layout.watchface, null);
 
-            mTextPaint = new Paint();
-            mTextPaint = createTextPaint(resources.getColor(R.color.digital_text));
+            Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE))
+                    .getDefaultDisplay();
+            display.getSize(displaySize);
+
+            specW = View.MeasureSpec.makeMeasureSpec(displaySize.x,
+                    View.MeasureSpec.EXACTLY);
+            specH = View.MeasureSpec.makeMeasureSpec(displaySize.y,
+                    View.MeasureSpec.EXACTLY);
+
+            date = (TextView) myLayout.findViewById(R.id.date);
+            hour = (TextView) myLayout.findViewById(R.id.hour);
+            minute = (TextView) myLayout.findViewById(R.id.minute);
+            second = (TextView) myLayout.findViewById(R.id.second);
+            highTemp = (TextView) myLayout.findViewById(R.id.high_temp);
+            lowTemp = (TextView) myLayout.findViewById(R.id.low_temp);
 
             mCalendar = Calendar.getInstance();
         }
@@ -152,13 +194,6 @@ public class MyWatchFace extends CanvasWatchFaceService {
             super.onDestroy();
         }
 
-        private Paint createTextPaint(int textColor) {
-            Paint paint = new Paint();
-            paint.setColor(textColor);
-            paint.setTypeface(NORMAL_TYPEFACE);
-            paint.setAntiAlias(true);
-            return paint;
-        }
 
         @Override
         public void onVisibilityChanged(boolean visible) {
@@ -186,6 +221,9 @@ public class MyWatchFace extends CanvasWatchFaceService {
             mRegisteredTimeZoneReceiver = true;
             IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
             MyWatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
+
+            IntentFilter weatherChangedFilter = new IntentFilter(WeatherListenerService.ACTION_WEATHER_CHANGED);
+            MyWatchFace.this.registerReceiver(mWeatherDataChangedReceiver, weatherChangedFilter);
         }
 
         private void unregisterReceiver() {
@@ -194,6 +232,8 @@ public class MyWatchFace extends CanvasWatchFaceService {
             }
             mRegisteredTimeZoneReceiver = false;
             MyWatchFace.this.unregisterReceiver(mTimeZoneReceiver);
+
+            MyWatchFace.this.unregisterReceiver(mWeatherDataChangedReceiver);
         }
 
         @Override
@@ -208,7 +248,6 @@ public class MyWatchFace extends CanvasWatchFaceService {
             float textSize = resources.getDimension(isRound
                     ? R.dimen.digital_text_size_round : R.dimen.digital_text_size);
 
-            mTextPaint.setTextSize(textSize);
         }
 
         @Override
@@ -229,7 +268,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
             if (mAmbient != inAmbientMode) {
                 mAmbient = inAmbientMode;
                 if (mLowBitAmbient) {
-                    mTextPaint.setAntiAlias(!inAmbientMode);
+
                 }
                 invalidate();
             }
@@ -241,23 +280,31 @@ public class MyWatchFace extends CanvasWatchFaceService {
 
         @Override
         public void onDraw(Canvas canvas, Rect bounds) {
-            // Draw the background.
-            if (isInAmbientMode()) {
-                canvas.drawColor(Color.BLACK);
-            } else {
-                canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
-            }
 
             // Draw H:MM in ambient mode or H:MM:SS in interactive mode.
             long now = System.currentTimeMillis();
             mCalendar.setTimeInMillis(now);
 
-            String text = mAmbient
-                    ? String.format("%d:%02d", mCalendar.get(Calendar.HOUR),
-                    mCalendar.get(Calendar.MINUTE))
-                    : String.format("%d:%02d:%02d", mCalendar.get(Calendar.HOUR),
-                    mCalendar.get(Calendar.MINUTE), mCalendar.get(Calendar.SECOND));
-            canvas.drawText(text, mXOffset, mYOffset, mTextPaint);
+            Date currentDate = mCalendar.getTime();
+            SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM d yyyy");
+            String formattedDate = sdf.format(currentDate);
+
+            hour.setText(String.format("%02d", currentDate.getHours()));
+            minute.setText(String.format("%02d", currentDate.getMinutes()));
+            if (!isInAmbientMode()) {
+                second.setText(String.format("%02d", currentDate.getSeconds()));
+            }
+            date.setText(formattedDate);
+            date.setVisibility(View.VISIBLE);
+            hour.setVisibility(View.VISIBLE);
+            minute.setVisibility(View.VISIBLE);
+            second.setVisibility(View.VISIBLE);
+            myLayout.measure(specW, specH);
+            myLayout.layout(0, 0, myLayout.getMeasuredWidth(),
+                    myLayout.getMeasuredHeight());
+
+            canvas.drawColor(getColor(R.color.primary));
+            myLayout.draw(canvas);
         }
 
         /**
@@ -291,6 +338,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
                 mUpdateTimeHandler.sendEmptyMessageDelayed(MSG_UPDATE_TIME, delayMs);
             }
         }
+
 
     }
 }

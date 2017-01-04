@@ -151,7 +151,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter implements 
         String format = "json";
         String units = "metric";
         int numDays = 14;
-        sendDataToWatch();
+
         try {
             // Construct the URL for the OpenWeatherMap query
             // Possible parameters are avaiable at OWM's forecast API page, at
@@ -203,6 +203,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter implements 
             }
             forecastJsonStr = buffer.toString();
             getWeatherDataFromJson(forecastJsonStr, locationQuery);
+            sendDataToWatch();
         } catch (IOException e) {
             Log.e(LOG_TAG, "Error ", e);
             // If the code didn't successfully get the weather data, there's no point in attempting

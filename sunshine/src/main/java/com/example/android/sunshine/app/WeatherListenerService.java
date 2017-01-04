@@ -24,10 +24,12 @@ public class WeatherListenerService
 
     public final String LOG_TAG = WeatherListenerService.class.getSimpleName();
 
-    public static final String WEATHER_DATA = "/weather-data";
-    public static final String HIGH_TEMP = "high-temp";
-    public static final String LOW_TEMP = "low-temp";
-    public static final String WEATHER_ID = "sunshine_weather_id";
+    static final String KEY_PATH = "/weather_info";
+    static final String KEY_WEATHER_ID = "KEY_WEATHER_ID";
+    static final String KEY_MIN_TEMP = "KEY_MIN_TEMP";
+    static final String KEY_MAX_TEMP = "KEY_MAX_TEMP";
+
+    public static final String ACTION_WEATHER_CHANGED = "ACTION_WEATHER_CHANGED";
 
     GoogleApiClient mGoogleApiClient;
 
@@ -45,16 +47,14 @@ public class WeatherListenerService
 
     @Override
     public void onDataChanged(DataEventBuffer dataEvents) {
-        Log.v(LOG_TAG, "DataMap item made it to watch: ");
-        Toast.makeText(this, "onDataChanged", Toast.LENGTH_LONG).show();
         for (DataEvent dataEvent : dataEvents) {
             if (dataEvent.getType() == DataEvent.TYPE_CHANGED) {
                 DataItem item = dataEvent.getDataItem();
                 if (dataEvent.getType() == DataEvent.TYPE_CHANGED) {
                     DataMap dataMap = DataMapItem.fromDataItem(item).getDataMap();
-                    String mMaxTemp = dataMap.getString(HIGH_TEMP);
-                    String mMinTemp = dataMap.getString(LOW_TEMP);
-                    String mWeatherId = dataMap.getString(WEATHER_ID);
+                    String mMaxTemp = dataMap.getString(KEY_MAX_TEMP);
+                    String mMinTemp = dataMap.getString(KEY_MIN_TEMP);
+                    String mWeatherId = dataMap.getString(KEY_WEATHER_ID);
                     Intent intent = new Intent("ACTION_WEATHER_CHANGED");
                     intent.putExtra("high-temp", mMaxTemp)
                             .putExtra("low-temp", mMinTemp)
@@ -69,7 +69,6 @@ public class WeatherListenerService
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Wearable.DataApi.addListener(mGoogleApiClient, this);
-        Toast.makeText(this, "onConnect listener service", Toast.LENGTH_LONG).show();
         Log.d(LOG_TAG, "Google API Client was connected");
     }
 
