@@ -30,6 +30,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.text.format.Time;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.android.sunshine.app.BuildConfig;
@@ -43,9 +44,11 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
+import com.google.android.gms.wearable.WearableListenerService;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -98,6 +101,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter implements 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Log.v(LOG_TAG, "onConnected");
+
         sendDataToWatch();
     }
 
@@ -128,7 +132,12 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter implements 
 
     public SunshineSyncAdapter(Context context, boolean autoInitialize) {
         super(context, autoInitialize);
-
+        Wearable.MessageApi.addListener(mGoogleApiClient, new ListenerService() {
+            @Override
+            public void onMessageReceived(MessageEvent messageEvent) {
+                sendDataToWatch();
+            }
+        });
     }
 
     @Override
@@ -726,4 +735,13 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter implements 
         spe.putInt(c.getString(R.string.pref_location_status_key), locationStatus);
         spe.commit();
     }
+
+    public static class ListenerService extends WearableListenerService {
+
+        @Override
+        public void onMessageReceived(MessageEvent messageEvent) {
+            super.onMessageReceived(messageEvent);
+        }
+    }
+
 }
