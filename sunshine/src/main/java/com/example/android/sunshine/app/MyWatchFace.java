@@ -42,6 +42,7 @@ import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -122,10 +123,12 @@ public class MyWatchFace extends CanvasWatchFaceService {
             public void onReceive(Context context, Intent intent) {
                 mHighTemp = intent.getStringExtra("high-temp");
                 mLowTemp = intent.getStringExtra("low-temp");
-                mWeatherId = intent.getStringExtra("sunshine_weather_id");
+                mWeatherId = intent.getIntExtra("sunshine_weather_id", 0);
 
                 highTemp.setText(mHighTemp);
                 lowTemp.setText(mLowTemp);
+                int weatherIconDrawable = Utility.getIconResourceForWeatherCondition(mWeatherId);
+                weatherIcon.setImageDrawable(getDrawable(weatherIconDrawable));
             }
         };
         float mXOffset;
@@ -133,11 +136,12 @@ public class MyWatchFace extends CanvasWatchFaceService {
 
         private String mHighTemp;
         private String mLowTemp;
-        private String mWeatherId;
+        private int mWeatherId;
 
         private int specW, specH;
         private View myLayout;
         private TextView date, hour, minute, second, highTemp, lowTemp;
+        private ImageView weatherIcon;
         private final Point displaySize = new Point();
 
         GoogleApiClient mGoogleApiClient;
@@ -153,7 +157,6 @@ public class MyWatchFace extends CanvasWatchFaceService {
         @Override
         public void onCreate(SurfaceHolder holder) {
             super.onCreate(holder);
-            Log.v(TAG, "onCreate1111");
             setWatchFaceStyle(new WatchFaceStyle.Builder(MyWatchFace.this)
                     .setCardPeekMode(WatchFaceStyle.PEEK_MODE_VARIABLE)
                     .setBackgroundVisibility(WatchFaceStyle.BACKGROUND_VISIBILITY_INTERRUPTIVE)
@@ -182,9 +185,12 @@ public class MyWatchFace extends CanvasWatchFaceService {
             hour = (TextView) myLayout.findViewById(R.id.hour);
             minute = (TextView) myLayout.findViewById(R.id.minute);
             second = (TextView) myLayout.findViewById(R.id.second);
+            if (isInAmbientMode()) {
+                second.setVisibility(View.INVISIBLE);
+            }
             highTemp = (TextView) myLayout.findViewById(R.id.high_temp);
             lowTemp = (TextView) myLayout.findViewById(R.id.low_temp);
-
+            weatherIcon = (ImageView) myLayout.findViewById(R.id.weather_icon);
             mCalendar = Calendar.getInstance();
         }
 
@@ -290,9 +296,9 @@ public class MyWatchFace extends CanvasWatchFaceService {
             String formattedDate = sdf.format(currentDate);
 
             hour.setText(String.format("%02d", currentDate.getHours()));
-            minute.setText(String.format("%02d", currentDate.getMinutes()));
+            minute.setText(":" + String.format("%02d", currentDate.getMinutes()));
             if (!isInAmbientMode()) {
-                second.setText(String.format("%02d", currentDate.getSeconds()));
+                second.setText(":" + String.format("%02d", currentDate.getSeconds()));
             }
             date.setText(formattedDate);
             date.setVisibility(View.VISIBLE);

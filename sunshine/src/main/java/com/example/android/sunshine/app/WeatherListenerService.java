@@ -61,13 +61,13 @@ public class WeatherListenerService
                 DataItem item = dataEvent.getDataItem();
                 if (dataEvent.getType() == DataEvent.TYPE_CHANGED) {
                     DataMap dataMap = DataMapItem.fromDataItem(item).getDataMap();
-                    String mMaxTemp = dataMap.getString(KEY_MAX_TEMP);
-                    String mMinTemp = dataMap.getString(KEY_MIN_TEMP);
-                    String mWeatherId = dataMap.getString(KEY_WEATHER_ID);
+                    String maxTemp = dataMap.getString(KEY_MAX_TEMP);
+                    String minTemp = dataMap.getString(KEY_MIN_TEMP);
+                    int weatherId = dataMap.getInt(KEY_WEATHER_ID);
                     Intent intent = new Intent("ACTION_WEATHER_CHANGED");
-                    intent.putExtra("high-temp", mMaxTemp)
-                            .putExtra("low-temp", mMinTemp)
-                            .putExtra("sunshine_weather_id", mWeatherId);
+                    intent.putExtra("high-temp", maxTemp)
+                            .putExtra("low-temp", minTemp)
+                            .putExtra("sunshine_weather_id", weatherId);
                     sendBroadcast(intent);
                 }
             } else if (dataEvent.getType() == DataEvent.TYPE_DELETED) {
