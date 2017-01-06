@@ -1,7 +1,7 @@
-Advanced Android Sample App
+Android Wear Project
 ===================================
 
-Synchronizes weather information from OpenWeatherMap on Android Phones and Tablets. Used in the Udacity Advanced Android course.
+Please insert your OpenWeatherMap API key into gradle.properties file before compiling this app.
 
 Pre-requisites
 --------------
